@@ -5168,21 +5168,28 @@ function (window, undefined) {
 	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
+		let res = new cArray(), valueError = new cError(cErrorType.wrong_value_type), numError = new cError(cErrorType.not_numeric);
+
 		// toCol - cWRAPCOLS call
 		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
-			return argError;
+			// return argError;
+			res.addElement(argError);
+			return res;
 		}
 
 		let arg1 = arg[0];
 		if (arg1.type === cElementType.empty) {
-			return new cError(cErrorType.wrong_value_type);
+			// return new cError(cErrorType.wrong_value_type);
+			res.addElement(valueError);
+			return res;
 		}
 		let arg1Dimensions = arg1.getDimensions();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
-			return new cError(cErrorType.wrong_value_type);
+			// return new cError(cErrorType.wrong_value_type);
+			res.addElement(valueError);
+			return res;
 		}
-
 		let isSingleColumn = arg1Dimensions.col === 1 ? true : false;
 		let arg2 = arg[1];
 
@@ -5191,7 +5198,9 @@ function (window, undefined) {
 		} else if (cElementType.array === arg2.type) {
 			arg2 = arg2.getElementRowCol(0, 0);
 		} else if (arg2.type === cElementType.empty) {
-			return new cError(cErrorType.not_numeric);
+			// return new cError(cErrorType.not_numeric);
+			res.addElement(numError);
+			return res;
 		}
 		if (!arg2) {
 			arg2 = new cEmpty();
@@ -5199,12 +5208,16 @@ function (window, undefined) {
 
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
-			return arg2;
+			// return arg2;
+			res.addElement(arg2);
+			return res;
 		}
 
 		arg2 = Math.floor(arg2.toNumber());
 		if (arg2 < 1) {
-			return new cError(cErrorType.not_numeric);
+			// return new cError(cErrorType.not_numeric);
+			res.addElement(numError);
+			return res;
 		}
 
 		let arg3 = arg[2] ? arg[2] : new cError(cErrorType.not_available);
@@ -5214,11 +5227,18 @@ function (window, undefined) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}
 
-		let res = new cArray();
+		// let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
 			
 			if ((isSingleColumn && arg1Dimensions.row <= arg2) || (!isSingleColumn && arg1Dimensions.col <= arg2)) {
+				if (arg1.type !== cElementType.array) {
+					// convert area to array and the return it
+					console.log(arg1);
+					arg1 = arg1.getFullArray();
+				}
 				return arg1;
+				// res.addElement(arg1);
+				// return res;
 			}
 
 			let rowCounter = 0, colCounter = 0;
