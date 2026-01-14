@@ -5170,23 +5170,21 @@ function (window, undefined) {
 	function wrapRowsCols(arg, argument1, toCol) {
 		let res = new cArray(), valueError = new cError(cErrorType.wrong_value_type), numError = new cError(cErrorType.not_numeric);
 
-		// toCol - cWRAPCOLS call
-		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		// toCol = true - cWRAPCOLS call
+		// toCol = false - cWRAPROWS call
+		let argError = cBaseFunction.prototype._checkErrorArg.call(this, [arg[0], arg[1]]);
 		if (argError) {
-			// return argError;
 			res.addElement(argError);
 			return res;
 		}
 
 		let arg1 = arg[0];
 		if (arg1.type === cElementType.empty) {
-			// return new cError(cErrorType.wrong_value_type);
 			res.addElement(valueError);
 			return res;
 		}
 		let arg1Dimensions = arg1.getDimensions();
 		if (arg1Dimensions.col > 1 && arg1Dimensions.row > 1) {
-			// return new cError(cErrorType.wrong_value_type);
 			res.addElement(valueError);
 			return res;
 		}
@@ -5198,7 +5196,6 @@ function (window, undefined) {
 		} else if (cElementType.array === arg2.type) {
 			arg2 = arg2.getElementRowCol(0, 0);
 		} else if (arg2.type === cElementType.empty) {
-			// return new cError(cErrorType.not_numeric);
 			res.addElement(numError);
 			return res;
 		}
@@ -5208,14 +5205,12 @@ function (window, undefined) {
 
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
-			// return arg2;
 			res.addElement(arg2);
 			return res;
 		}
 
 		arg2 = Math.floor(arg2.toNumber());
 		if (arg2 < 1) {
-			// return new cError(cErrorType.not_numeric);
 			res.addElement(numError);
 			return res;
 		}
@@ -5227,58 +5222,17 @@ function (window, undefined) {
 			arg3 = arg3.getElementRowCol(0, 0);
 		}
 
-		// let res = new cArray();
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) {
 			
 			if ((isSingleColumn && arg1Dimensions.row <= arg2) || (!isSingleColumn && arg1Dimensions.col <= arg2)) {
 				if (arg1.type !== cElementType.array) {
 					// convert area to array and the return it
-					console.log(arg1);
 					arg1 = arg1.getFullArray();
 				}
 				return arg1;
-				// res.addElement(arg1);
-				// return res;
 			}
 
 			let rowCounter = 0, colCounter = 0;
-			if (cElementType.array === arg1.type) {
-				if (isSingleColumn) {
-					colCounter = toCol ? Math.ceil(arg1Dimensions.row / arg2) : arg2;
-					rowCounter = toCol ? arg2 : Math.ceil(arg1Dimensions.row / arg2);
-				} else {
-					colCounter = toCol ? arg2 : Math.ceil(arg1Dimensions.col / arg2);
-					rowCounter = toCol ? Math.ceil(arg1Dimensions.col / arg2) : arg2;
-				}
-
-				let arrayFrom = arg1.array;
-				if (toCol) {
-					for (let col = 0; col < colCounter; col++) {
-						// get part of array from arg1 and insertCol
-						res.pushCol(arrayFrom.slice(col * arg2, (col + 1) * arg2), 0, true);
-					}
-				} else {
-					for (let row = 0; row < rowCounter; row++) {
-						
-						// when we get the matrix from the argument, we get strings wrapped in arrays
-						// [[cNumber],[cNumber],[cNumber]] (1 row = 1 array inside the common matrix from the argument)
-						// to insert correctly into the row, you need to get all the object values and wrap them in one array like [cNumber, cNumber, cNumber]
-
-						let arrToInsert = arrayFrom.slice(row * arg2, (row + 1) * arg2);
-						let flatArray = [].concat.apply([], arrToInsert);
-						res.pushRow([flatArray], 0);
-
-						// ES6+ method doesn't work with old versions IE
-						// res.pushRow([arrayFrom.slice(row * arg2, (row + 1) * arg2).flat()], 0);
-
-					}
-				}
-
-				res.recalculate();
-				res.fillMatrix(arg3);
-
-				return res;
-			}
 
 			arg1.foreach2(function (val) {
 				if (toCol) {
@@ -5308,6 +5262,11 @@ function (window, undefined) {
 		} else {
 			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 				arg1 = arg1.getValue();
+			}
+
+			if (arg1.type === cElementType.empty) {
+				res.addElement(valueError);
+				return res;
 			}
 			res.addElement(arg1);
 		}
