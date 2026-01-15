@@ -1213,6 +1213,62 @@
 			return false;
 		},
 
+		Get_Clipboard_Data2 : function(callback)
+		{
+			if (!navigator.clipboard) {
+				return false;
+			}
+			try {
+				navigator.clipboard.read()
+					.then(function(items){
+						if (!items || items.length === 0)
+						{
+							return;
+						}
+
+						var item = items[0];
+						var paste_data = {};
+
+						function getData(item, type) {
+							if (item.types.includes(type))
+							{
+								return item.getType(type).then(function(blob){
+									return blob.text();
+								});
+							}
+							return Promise.resolve(undefined);
+						}
+
+						getData(item, "web text/x-custom")
+							.then(function(value){
+								paste_data[c_oAscClipboardDataFormat.Internal] = value;
+								return getData(item, "text/html");
+							})
+							.then(function(value){
+								paste_data[c_oAscClipboardDataFormat.Html] = value;
+								return getData(item, "text/plain");
+							})
+							.then(function(value){
+								paste_data[c_oAscClipboardDataFormat.Text] = value;
+							})
+							.then(function(){
+								callback(paste_data);
+							})
+							.catch(function(e){
+								console.log(e);
+							});
+					})
+					.catch(function(e){
+						console.log(e);
+					});
+
+				return true;
+			} catch (e) {
+				console.log(e);
+				return false;
+			}
+		},
+
 		Button_Copy : function(oldCopy)
 		{
 			if (!this.isCopyEnabled()) {

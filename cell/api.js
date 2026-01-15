@@ -5969,6 +5969,8 @@ var editor;
 		let tes = 1;
 	})
 
+	return;
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9708,7 +9710,7 @@ var editor;
 
 	spreadsheet_api.prototype.asc_getClipboardData = function(callback) {
 		if (!AscCommon.g_clipboardBase.IsWorking()) {
-			return AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			return AscCommon.g_clipboardBase.Get_Clipboard_Data2(function (data) {
 				callback(data);
 			});
 		}
