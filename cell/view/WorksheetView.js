@@ -19047,7 +19047,8 @@ function isAllowPasteLink(pastedWb) {
 				if (parseResult.externalReferenesNeedAdd) {
 					t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 					// then we parse the formula again to obtain the correct outStack and external link indexes
-					newFP = new AscCommonExcel.parserFormula(valText.substring(1), cellWithFormula, this.model);
+					// and we get formula from previous .parse to get a string with complete parentheses if they were missing
+					newFP = new AscCommonExcel.parserFormula(newFP.getFormula(), cellWithFormula, this.model);
 					if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
 						this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 						endTransaction();
