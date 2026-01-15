@@ -5965,9 +5965,10 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-      return;
-    }
+	this.asc_getPasteOptions(function (data) {
+		let tes = 1;
+	})
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -9634,6 +9635,85 @@ var editor;
 		this.wb.removeAllInks();
 	};
 
+	spreadsheet_api.prototype.asc_getPasteOptions = function(callback)
+	{
+		this.asc_getClipboardData(function (data) {
+			//data.clipboardData.types
+			
+			// if (data) {
+			// 	var _text_format = data.clipboardData.getData("text/plain");
+			// 	var _internal = isDisableRawPaste ? "" : this.ClosureParams.getData("text/x-custom");
+			// 	if (_internal && _internal != "" && _internal.indexOf("asc_internalData2;") == 0) {
+			// 		var _images = [];
+			// 		checkImages(function(_item) {
+			// 			if (_item && _item.getAsFile) {
+			// 				_images.push(_item.getAsFile());
+			// 			}
+			// 		});
+			// 		AscCommon.g_specialPasteHelper.specialPasteData.images = _images.length ? _images : null;
+			// 		this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal.substr("asc_internalData2;".length), null, _text_format);
+			// 		g_clipboardBase.Paste_End();
+			// 		return false;
+			// 	}
+			// 	var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
+			// 	if (_html_format && _html_format != "") {
+			// 		var nIndex = _html_format.indexOf("</html>");
+			// 		if (-1 != nIndex) {
+			// 			_html_format = _html_format.substring(0, nIndex + "</html>".length);
+			// 		}
+			// 		var _images$jscomp$0 = [];
+			// 		checkImages(function(_item) {
+			// 			if (_item && _item.getAsFile) {
+			// 				_images$jscomp$0.push(_item.getAsFile());
+			// 			}
+			// 		});
+			// 		AscCommon.g_specialPasteHelper.specialPasteData.images = _images$jscomp$0.length ? _images$jscomp$0 : null;
+			// 		this.CommonIframe_PasteStart(_html_format, _text_format);
+			// }
+		});
+		//from binary/html/text
+
+		// var isTablePasted = checkTablesPaste();
+		// var allowedSpecialPasteProps;
+		// var sProps = Asc.c_oSpecialPasteProps;
+		// if (fromBinary) {
+		// 	allowedSpecialPasteProps =
+		// 		[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+		// 			sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+		// 			sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+		// 			sProps.columnWidth];
+		//
+		// 	if (isAllowPasteLink(pasteInfo.wb)) {
+		// 		allowedSpecialPasteProps.push(sProps.link);
+		// 	}
+		// 	if (!isTablePasted) {
+		// 		//add transpose property
+		// 		allowedSpecialPasteProps.push(sProps.transpose);
+		// 	}
+		// } else {
+		// 	//matchDestinationFormatting - пока не добавляю, так как работает как и values
+		// 	if (bText) {
+		// 		allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
+		// 	} else {
+		// 		allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+		// 	}
+		// }
+		//
+		// if (specialPasteHelper.specialPasteData.images && specialPasteHelper.specialPasteData.images.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
+		// 	allowedSpecialPasteProps.push(sProps.picture);
+		// }
+
+
+	};
+
+	spreadsheet_api.prototype.asc_getClipboardData = function(callback) {
+		if (!AscCommon.g_clipboardBase.IsWorking()) {
+			return AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+				callback(data);
+			});
+		}
+		return false;
+	};
   /*
    * Export
    * -----------------------------------------------------------------------------
