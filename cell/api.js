@@ -9640,8 +9640,70 @@ var editor;
 	spreadsheet_api.prototype.asc_getPasteOptions = function(callback)
 	{
 		this.asc_getClipboardData(function (data) {
-			//data.clipboardData.types
-			
+			if (!data) {
+				callback(null);
+				return;
+			}
+			//onpaste
+			if (data.clipboardData) {
+				callback(null);
+			} else {
+				//data -> navigator.clipboard -> [AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.Html, AscCommon.c_oAscClipboardDataFormat.Text]
+				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+				let allowedSpecialPasteProps = null;
+				let sProps = Asc.c_oSpecialPasteProps;
+				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+					// var isTablePasted = checkTablesPaste();
+					if (_internal.indexOf("xslData;") > -1) {
+						allowedSpecialPasteProps =
+							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+								sProps.columnWidth];
+					} else {
+						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+					}
+
+					callback(allowedSpecialPasteProps);
+					//TODO images
+					return;
+					// 	if (isAllowPasteLink(pasteInfo.wb)) {
+					// 		allowedSpecialPasteProps.push(sProps.link);
+					// 	}
+					// 	if (!isTablePasted) {
+					// 		//add transpose property
+					// 		allowedSpecialPasteProps.push(sProps.transpose);
+					// 	}
+				}
+				let _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+				if (_html) {
+					if (_html.indexOf('class="xslData;XLSY') > 0) {
+						allowedSpecialPasteProps =
+							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
+								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
+								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
+								sProps.columnWidth];
+					} else {
+						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
+					}
+
+					callback(allowedSpecialPasteProps);
+					//TODO images
+					return;
+				}
+
+				let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+				if (_text) {
+					allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
+					callback(allowedSpecialPasteProps);
+
+					return;
+				}
+
+				callback(null);
+			}
+
+
 			// if (data) {
 			// 	var _text_format = data.clipboardData.getData("text/plain");
 			// 	var _internal = isDisableRawPaste ? "" : this.ClosureParams.getData("text/x-custom");

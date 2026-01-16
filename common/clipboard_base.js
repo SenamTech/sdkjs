@@ -1218,55 +1218,62 @@
 			if (!navigator.clipboard) {
 				return false;
 			}
-			try {
-				navigator.clipboard.read()
-					.then(function(items){
-						if (!items || items.length === 0)
-						{
-							return;
-						}
 
-						var item = items[0];
-						var paste_data = {};
+			this.Check_Paste_New(function (success) {
+				if (!success) {
+					return false;
+				}
 
-						function getData(item, type) {
-							if (item.types.includes(type))
+				try {
+					navigator.clipboard.read()
+						.then(function(items){
+							if (!items || items.length === 0)
 							{
-								return item.getType(type).then(function(blob){
-									return blob.text();
-								});
+								return;
 							}
-							return Promise.resolve(undefined);
-						}
 
-						getData(item, "web text/x-custom")
-							.then(function(value){
-								paste_data[c_oAscClipboardDataFormat.Internal] = value;
-								return getData(item, "text/html");
-							})
-							.then(function(value){
-								paste_data[c_oAscClipboardDataFormat.Html] = value;
-								return getData(item, "text/plain");
-							})
-							.then(function(value){
-								paste_data[c_oAscClipboardDataFormat.Text] = value;
-							})
-							.then(function(){
-								callback(paste_data);
-							})
-							.catch(function(e){
-								console.log(e);
-							});
-					})
-					.catch(function(e){
-						console.log(e);
-					});
+							var item = items[0];
+							var paste_data = {};
 
-				return true;
-			} catch (e) {
-				console.log(e);
-				return false;
-			}
+							function getData(item, type) {
+								if (item.types.includes(type))
+								{
+									return item.getType(type).then(function(blob){
+										return blob.text();
+									});
+								}
+								return Promise.resolve(undefined);
+							}
+
+							getData(item, "web text/x-custom")
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Internal] = value;
+									return getData(item, "text/html");
+								})
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Html] = value;
+									return getData(item, "text/plain");
+								})
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Text] = value;
+								})
+								.then(function(){
+									callback(paste_data);
+								})
+								.catch(function(e){
+									console.log(e);
+								});
+						})
+						.catch(function(e){
+							console.log(e);
+						});
+
+					return true;
+				} catch (e) {
+					console.log(e);
+					return false;
+				}
+			});
 		},
 
 		Button_Copy : function(oldCopy)
