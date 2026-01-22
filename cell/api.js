@@ -476,49 +476,15 @@ var editor;
 
   spreadsheet_api.prototype.asc_SpecialPasteData = function(props, updateClipboardData) {
 	if (this.canEdit()) {
+		updateClipboardData = true;
 		if (updateClipboardData) {
 			let t = this;
-			this.asc_getClipboardData(function (paste_data) {
-				let _format, data1, data2;
-				let callback = function (_data1, _text_data, _data2) {
-					let ws = t.wb.getWorksheet();
-					window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
-					window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = false;
+			AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+				let ws = t.wb.getWorksheet();
+				AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				AscCommon.g_specialPasteHelper.specialPasteData.pasteFromWord = false;
 
-
-					window['AscCommon'].g_specialPasteHelper.specialPasteData._format = _format;
-					window['AscCommon'].g_specialPasteHelper.specialPasteData.data1 = _data1 ? _data1 : data1;
-					window['AscCommon'].g_specialPasteHelper.specialPasteData.data2 = _data2 ? _data2 : data2;
-					window['AscCommon'].g_specialPasteHelper.specialPasteData.text_data = _text_data ? _text_data : text_data;
-
-					t.wb.specialPasteData(props, updateClipboardData);
-				};
-
-				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Internal])
-				{
-					_format = AscCommon.c_oAscClipboardDataFormat.Internal;
-					data1 = paste_data[AscCommon.c_oAscClipboardDataFormat.Internal].substr("asc_internalData2;".length);
-					data2 = paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "";
-					callback();
-					return false;
-				}
-
-				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Html])
-				{
-					_format = AscCommon.c_oAscClipboardDataFormat.HtmlElement;
-					AscCommon.g_clipboardBase.CommonIframe_PasteStart(paste_data[AscCommon.c_oAscClipboardDataFormat.Html],
-						paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "", callback);
-					return false;
-				}
-
-				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Text])
-				{
-					_format = AscCommon.c_oAscClipboardDataFormat.Text;
-					data1 = paste_data[AscCommon.c_oAscClipboardDataFormat.Text];
-					callback();
-					return false;
-				}
-
+				t.wb.specialPasteData(props, updateClipboardData);
 			});
 		} else {
 			this.wb.specialPasteData(props);
@@ -9715,8 +9681,11 @@ var editor;
 						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
 					}
 
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
 					callback(allowedSpecialPasteProps);
-					//TODO images
 					return;
 					// 	if (isAllowPasteLink(pasteInfo.wb)) {
 					// 		allowedSpecialPasteProps.push(sProps.link);
@@ -9738,8 +9707,11 @@ var editor;
 						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
 					}
 
+					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
+						allowedSpecialPasteProps.push(sProps.picture);
+					}
+
 					callback(allowedSpecialPasteProps);
-					//TODO images
 					return;
 				}
 
