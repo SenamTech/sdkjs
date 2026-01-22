@@ -914,7 +914,7 @@
 					ifr.style.display = "block";
 					if (getHtmlElemCallback)
 					{
-						getHtmlElemCallback(frameWindow.document.body);
+						getHtmlElemCallback(frameWindow.document.body, text_data, ifr);
 						getHtmlElemCallback = null;
 					}
 					else

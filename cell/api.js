@@ -474,9 +474,55 @@ var editor;
     return AscCommon.g_specialPasteHelper.Special_Paste(props);
   };
 
-  spreadsheet_api.prototype.asc_SpecialPasteData = function(props) {
+  spreadsheet_api.prototype.asc_SpecialPasteData = function(props, updateClipboardData) {
 	if (this.canEdit()) {
-      this.wb.specialPasteData(props);
+		if (updateClipboardData) {
+			let t = this;
+			this.asc_getClipboardData(function (paste_data) {
+				let _format, data1, data2;
+				let callback = function (_data1, _text_data, _data2) {
+					let ws = t.wb.getWorksheet();
+					window['AscCommon'].g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+					window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = false;
+
+
+					window['AscCommon'].g_specialPasteHelper.specialPasteData._format = _format;
+					window['AscCommon'].g_specialPasteHelper.specialPasteData.data1 = _data1 ? _data1 : data1;
+					window['AscCommon'].g_specialPasteHelper.specialPasteData.data2 = _data2 ? _data2 : data2;
+					window['AscCommon'].g_specialPasteHelper.specialPasteData.text_data = _text_data ? _text_data : text_data;
+
+					t.wb.specialPasteData(props, updateClipboardData);
+				};
+
+				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Internal])
+				{
+					_format = AscCommon.c_oAscClipboardDataFormat.Internal;
+					data1 = paste_data[AscCommon.c_oAscClipboardDataFormat.Internal].substr("asc_internalData2;".length);
+					data2 = paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "";
+					callback();
+					return false;
+				}
+
+				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Html])
+				{
+					_format = AscCommon.c_oAscClipboardDataFormat.HtmlElement;
+					AscCommon.g_clipboardBase.CommonIframe_PasteStart(paste_data[AscCommon.c_oAscClipboardDataFormat.Html],
+						paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "", callback);
+					return false;
+				}
+
+				if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Text])
+				{
+					_format = AscCommon.c_oAscClipboardDataFormat.Text;
+					data1 = paste_data[AscCommon.c_oAscClipboardDataFormat.Text];
+					callback();
+					return false;
+				}
+
+			});
+		} else {
+			this.wb.specialPasteData(props);
+		}
     }
   };
 
@@ -5986,6 +6032,11 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
+	  var props = new Asc.SpecialPasteProps();
+	  props.asc_setProps(7)
+	this.asc_SpecialPasteData(props, true);
+	return
+
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
