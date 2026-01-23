@@ -5976,17 +5976,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	let t = this;
-	  this.asc_getPasteOptions(function (props) {
-		  AscCommon.g_specialPasteHelper.buttonInfo.options = props;
-		  AscCommon.g_specialPasteHelper.buttonInfo.range = new Asc.Range(0, 0, 0, 0)
-		  AscCommon.g_specialPasteHelper.buttonInfo.showPasteSpecial = true;
-		  t.asc_HideSpecialPasteButton();
-		  t.asc_ShowSpecialPasteButton( AscCommon.g_specialPasteHelper.buttonInfo);
-	})
-
-	return;
-
+	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
   	let ws = this.wb.getWorksheet();
 
 	let fArr = [];
@@ -6108,11 +6100,6 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
-	  var props = new Asc.SpecialPasteProps();
-	  props.asc_setProps(7)
-	this.asc_SpecialPasteData(props, true);
-	return
-
     let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
@@ -9769,7 +9756,7 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
-		this.asc_getClipboardData(function (data) {
+		this.getClipboardData(function (data) {
 			if (!data) {
 				callback(null);
 				return;
@@ -9782,7 +9769,7 @@ var editor;
 				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
 				let _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
 				let allowedSpecialPasteProps = null;
-				let sProps = new Asc.c_oSpecialPasteProps();
+				let sProps = Asc.c_oSpecialPasteProps;
 
 				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
 					// var isTablePasted = checkTablesPaste();
@@ -9846,12 +9833,13 @@ var editor;
 		});
 	};
 
-	spreadsheet_api.prototype.asc_getClipboardData = function(callback) {
+	spreadsheet_api.prototype.getClipboardData = function(callback) {
 		if (!AscCommon.g_clipboardBase.IsWorking()) {
 			return AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
 				callback(data);
 			});
 		}
+		callback(null);
 		return false;
 	};
   /*
@@ -10474,6 +10462,7 @@ var editor;
   prot["sync_currentSheetCallback"]= prot.sync_currentSheetCallback;
 
   prot["asc_SetIsSupportDynamicArrays"]= prot.asc_SetIsSupportDynamicArrays;
+  prot["asc_getPasteOptions"]= prot.asc_getPasteOptions;
 
 
 

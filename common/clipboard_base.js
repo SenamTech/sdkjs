@@ -537,10 +537,6 @@
 				};
 				document.onpaste          = function(e)
 				{
-					if (g_clipboardBase.getClipboardDataCallback) {
-						g_clipboardBase.getClipboardDataCallback(e);
-						return;
-					}
 					return g_clipboardBase._private_onpaste(e);
 				};
 				document["onbeforecopy"]  = function(e)
@@ -1331,7 +1327,7 @@
 			}
 			if (window["AscDesktopEditor"])
 			{
-				window["asc_desktop_copypaste"](this.Api, "Copy", true);
+				window["asc_desktop_copypaste"](this.Api, "Copy");
 				return true;
 			}
 
@@ -1426,7 +1422,30 @@
 
 		Button_Paste : function()
 		{
+			if (window["AscDesktopEditor"])
+			{
+				window["asc_desktop_copypaste"](this.Api, "Paste");
+				return true;
+			}
 
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return false;
+
+			let oThis = this;
+			if (this.isUseNewPaste())
+			{
+				this.Check_Paste_New(function (success) {
+					if (success) {
+						if (!oThis.Button_Paste_New()) {
+							return doPaste();
+						}
+					} else {
+						return doPaste();
+					}
+				})
+			} else {
+				return doPaste();
+			}
 
 			function doPaste() {
 				if (oThis.inputContext)
@@ -1869,10 +1888,10 @@
 })(window);
 
 // copy/paste focus error!!!
-window["asc_desktop_copypaste"] = function(_api, _method, test)
+window["asc_desktop_copypaste"] = function(_api, _method)
 {
 	var bIsFocus = _api.asc_IsFocus();
 	if (!bIsFocus)
 		_api.asc_enableKeyEvents(true);
-	window["AscDesktopEditor"][_method](test);
+	window["AscDesktopEditor"][_method]();
 };
