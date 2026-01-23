@@ -1213,7 +1213,7 @@
 			return false;
 		},
 
-		Get_Clipboard_Data2 : function(callback)
+		Get_Clipboard_Data : function(callback)
 		{
 			if (!navigator.clipboard) {
 				return false;
@@ -1282,7 +1282,7 @@
 		initSpecialPasteData: function (callback) {
 			AscCommon.g_specialPasteHelper.Clean_SpecialPasteObj();
 
-			this.Get_Clipboard_Data2(function (paste_data) {
+			this.Get_Clipboard_Data(function (paste_data) {
 				let _format, data1, data2;
 				let _callback = function (_data1, _text_data, _data2) {
 					AscCommon.g_specialPasteHelper.specialPasteData._format = _format;
@@ -1422,20 +1422,6 @@
 				this.bCut = false;
 			}
 			return _ret;
-		},
-
-		Get_Clipboard_Data : function(callback)
-		{
-			if (window["AscDesktopEditor"])
-			{
-				this.getClipboardDataCallback = function (data) {
-					callback(data);
-				};
-				window["asc_desktop_copypaste"](this.Api, "Paste");
-				this.getClipboardDataCallback = null;
-				return true;
-			}
-			return false;
 		},
 
 		Button_Paste : function()

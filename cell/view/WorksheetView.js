@@ -16933,8 +16933,8 @@ function isAllowPasteLink(pastedWb) {
 		return startActionMap[prop] ? {nDescription: startActionMap[prop], additional: val} : null;
 	};
 
-	WorksheetView.prototype.specialPaste = function (props) {
-		this.cellPasteHelper.specialPaste(props);
+	WorksheetView.prototype.specialPaste = function (props, updateClipboardData) {
+		this.cellPasteHelper.specialPaste(props, updateClipboardData);
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
@@ -30154,7 +30154,7 @@ function isAllowPasteLink(pastedWb) {
 
 		return false;
 	};
-	CCellPasteHelper.prototype.specialPaste = function (props) {
+	CCellPasteHelper.prototype.specialPaste = function (props, updateClipboardData) {
 		var api = window["Asc"]["editor"];
 		var t = this;
 		let ws = this.ws;
@@ -30176,7 +30176,7 @@ function isAllowPasteLink(pastedWb) {
 			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
 			//для того, чтобы была возможность делать несколько математических операций подряд
-			var doUndo = true;
+			var doUndo = updateClipboardData ? false : true;
 			if (window['Asc'].c_oSpecialPasteOperation.none !== props.operation && null !== props.operation) {
 				if (window['AscCommon'].g_specialPasteHelper.isAppliedOperation) {
 					doUndo = false;

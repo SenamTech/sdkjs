@@ -476,12 +476,11 @@ var editor;
 
   spreadsheet_api.prototype.asc_SpecialPasteData = function(props, updateClipboardData) {
 	if (this.canEdit()) {
-		updateClipboardData = true;
 		if (updateClipboardData) {
 			let t = this;
 			AscCommon.g_clipboardBase.initSpecialPasteData(function () {
 				let ws = t.wb.getWorksheet();
-				AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
+				//AscCommon.g_specialPasteHelper.specialPasteData.activeRange = ws.model.selectionRange.clone(ws.model);
 				AscCommon.g_specialPasteHelper.specialPasteData.pasteFromWord = false;
 
 				t.wb.specialPasteData(props, updateClipboardData);
@@ -5977,8 +5976,13 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	this.asc_getPasteOptions(function (data) {
-		let tes = 1;
+	let t = this;
+	  this.asc_getPasteOptions(function (props) {
+		  AscCommon.g_specialPasteHelper.buttonInfo.options = props;
+		  AscCommon.g_specialPasteHelper.buttonInfo.range = new Asc.Range(0, 0, 0, 0)
+		  AscCommon.g_specialPasteHelper.buttonInfo.showPasteSpecial = true;
+		  t.asc_HideSpecialPasteButton();
+		  t.asc_ShowSpecialPasteButton( AscCommon.g_specialPasteHelper.buttonInfo);
 	})
 
 	return;
@@ -9654,8 +9658,7 @@ var editor;
 		this.wb.removeAllInks();
 	};
 
-	spreadsheet_api.prototype.asc_getPasteOptions = function(callback)
-	{
+	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
 		this.asc_getClipboardData(function (data) {
 			if (!data) {
 				callback(null);
@@ -9667,8 +9670,10 @@ var editor;
 			} else {
 				//data -> navigator.clipboard -> [AscCommon.c_oAscClipboardDataFormat.Internal, AscCommon.c_oAscClipboardDataFormat.Html, AscCommon.c_oAscClipboardDataFormat.Text]
 				let _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+				let _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
 				let allowedSpecialPasteProps = null;
-				let sProps = Asc.c_oSpecialPasteProps;
+				let sProps = new Asc.c_oSpecialPasteProps();
+
 				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
 					// var isTablePasted = checkTablesPaste();
 					if (_internal.indexOf("xslData;") > -1) {
@@ -9685,7 +9690,8 @@ var editor;
 						allowedSpecialPasteProps.push(sProps.picture);
 					}
 
-					callback(allowedSpecialPasteProps);
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
 					return;
 					// 	if (isAllowPasteLink(pasteInfo.wb)) {
 					// 		allowedSpecialPasteProps.push(sProps.link);
@@ -9711,91 +9717,28 @@ var editor;
 						allowedSpecialPasteProps.push(sProps.picture);
 					}
 
-					callback(allowedSpecialPasteProps);
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
 					return;
 				}
 
 				let _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
 				if (_text) {
 					allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
-					callback(allowedSpecialPasteProps);
+					_specialPasteShowOptions.options = allowedSpecialPasteProps;
+					callback(_specialPasteShowOptions);
 
 					return;
 				}
 
 				callback(null);
 			}
-
-
-			// if (data) {
-			// 	var _text_format = data.clipboardData.getData("text/plain");
-			// 	var _internal = isDisableRawPaste ? "" : this.ClosureParams.getData("text/x-custom");
-			// 	if (_internal && _internal != "" && _internal.indexOf("asc_internalData2;") == 0) {
-			// 		var _images = [];
-			// 		checkImages(function(_item) {
-			// 			if (_item && _item.getAsFile) {
-			// 				_images.push(_item.getAsFile());
-			// 			}
-			// 		});
-			// 		AscCommon.g_specialPasteHelper.specialPasteData.images = _images.length ? _images : null;
-			// 		this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal.substr("asc_internalData2;".length), null, _text_format);
-			// 		g_clipboardBase.Paste_End();
-			// 		return false;
-			// 	}
-			// 	var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
-			// 	if (_html_format && _html_format != "") {
-			// 		var nIndex = _html_format.indexOf("</html>");
-			// 		if (-1 != nIndex) {
-			// 			_html_format = _html_format.substring(0, nIndex + "</html>".length);
-			// 		}
-			// 		var _images$jscomp$0 = [];
-			// 		checkImages(function(_item) {
-			// 			if (_item && _item.getAsFile) {
-			// 				_images$jscomp$0.push(_item.getAsFile());
-			// 			}
-			// 		});
-			// 		AscCommon.g_specialPasteHelper.specialPasteData.images = _images$jscomp$0.length ? _images$jscomp$0 : null;
-			// 		this.CommonIframe_PasteStart(_html_format, _text_format);
-			// }
 		});
-		//from binary/html/text
-
-		// var isTablePasted = checkTablesPaste();
-		// var allowedSpecialPasteProps;
-		// var sProps = Asc.c_oSpecialPasteProps;
-		// if (fromBinary) {
-		// 	allowedSpecialPasteProps =
-		// 		[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
-		// 			sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
-		// 			sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
-		// 			sProps.columnWidth];
-		//
-		// 	if (isAllowPasteLink(pasteInfo.wb)) {
-		// 		allowedSpecialPasteProps.push(sProps.link);
-		// 	}
-		// 	if (!isTablePasted) {
-		// 		//add transpose property
-		// 		allowedSpecialPasteProps.push(sProps.transpose);
-		// 	}
-		// } else {
-		// 	//matchDestinationFormatting - пока не добавляю, так как работает как и values
-		// 	if (bText) {
-		// 		allowedSpecialPasteProps = [sProps.keepTextOnly, sProps.useTextImport];
-		// 	} else {
-		// 		allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
-		// 	}
-		// }
-		//
-		// if (specialPasteHelper.specialPasteData.images && specialPasteHelper.specialPasteData.images.length && !(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
-		// 	allowedSpecialPasteProps.push(sProps.picture);
-		// }
-
-
 	};
 
 	spreadsheet_api.prototype.asc_getClipboardData = function(callback) {
 		if (!AscCommon.g_clipboardBase.IsWorking()) {
-			return AscCommon.g_clipboardBase.Get_Clipboard_Data2(function (data) {
+			return AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
 				callback(data);
 			});
 		}
