@@ -2080,6 +2080,68 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.asc_getPasteOptions = function(callback) {
+		var t = this;
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
+			if (!data) {
+				callback(null);
+				return;
+			}
+			
+			// Check presentation state (similar to _setSpecialPasteShowOptionsPresentation)
+			var presentation = t.WordControl.m_oLogicDocument;
+			if (!presentation || presentation.IsMasterMode()) {
+				callback(null);
+				return;
+			}
+			
+			// onpaste - real paste event
+			if (data.clipboardData) {
+				callback(null);
+				return;
+			}
+			
+			// data from navigator.clipboard
+			var _internal = data[AscCommon.c_oAscClipboardDataFormat.Internal];
+			var _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
+			var _text = data[AscCommon.c_oAscClipboardDataFormat.Text];
+			var _image = data[AscCommon.c_oAscClipboardDataFormat.Image];
+			
+			var _specialPasteShowOptions = new Asc.SpecialPasteShowOptions();
+			var allowedSpecialPasteProps = null;
+			var sProps = Asc.c_oSpecialPasteProps;
+
+			//TODO now don't analyze inner pasted content + place of paste. it can be slow. only simple options
+			// Internal paste from ONLYOFFICE (presentation binary format)
+			if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+				// Default options for internal paste (see _setSpecialPasteShowOptionsPresentation in wordcopypaste.js)
+				// By default: props = [sProps.sourceformatting, sProps.keepTextOnly]
+				// For internal paste with multiple variants: [destinationFormatting, sourceformatting, picture]
+				allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.keepTextOnly];
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// HTML format (external source - from Excel, Word, browsers)
+			if (_html) {
+				// External paste: [destinationFormatting, keepTextOnly] (see lines 4606, 5011 in wordcopypaste.js)
+				allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				
+				_specialPasteShowOptions.options = allowedSpecialPasteProps;
+				callback(_specialPasteShowOptions);
+				return;
+			}
+			
+			// Text only - no special paste options
+			if (_text) {
+			}
+			
+			callback(null);
+		});
+	};
+
 	asc_docs_api.prototype.asc_IsFocus = function(bIsNaturalFocus)
 	{
 		var _ret = false;
@@ -9940,6 +10002,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["preloadReporter"]						= asc_docs_api.prototype.preloadReporter;
 
 	asc_docs_api.prototype["asc_SpecialPaste"]						= asc_docs_api.prototype.asc_SpecialPaste;
+	asc_docs_api.prototype["asc_getPasteOptions"]					= asc_docs_api.prototype.asc_getPasteOptions;
 
 	// signatures
 	asc_docs_api.prototype["asc_addSignatureLine"] 					= asc_docs_api.prototype.asc_addSignatureLine;

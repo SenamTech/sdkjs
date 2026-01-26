@@ -470,8 +470,8 @@ var editor;
     return false;
   };
 
-  spreadsheet_api.prototype.asc_SpecialPaste = function(props) {
-    return AscCommon.g_specialPasteHelper.Special_Paste(props);
+  spreadsheet_api.prototype.asc_SpecialPaste = function(props, updateClipboardData) {
+    return AscCommon.g_specialPasteHelper.Special_Paste(props, updateClipboardData);
   };
 
   spreadsheet_api.prototype.asc_SpecialPasteData = function(props, updateClipboardData) {
@@ -9756,7 +9756,7 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_getPasteOptions = function(callback) {
-		this.getClipboardData(function (data) {
+		AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
 			if (!data) {
 				callback(null);
 				return;
@@ -9833,15 +9833,6 @@ var editor;
 		});
 	};
 
-	spreadsheet_api.prototype.getClipboardData = function(callback) {
-		if (!AscCommon.g_clipboardBase.IsWorking()) {
-			return AscCommon.g_clipboardBase.Get_Clipboard_Data(function (data) {
-				callback(data);
-			});
-		}
-		callback(null);
-		return false;
-	};
   /*
    * Export
    * -----------------------------------------------------------------------------

@@ -1650,9 +1650,9 @@
 			this.Api = _api;
 		},
 
-		Special_Paste : function(props)
+		Special_Paste : function(props, updateClipboardData)
 		{
-			this.Api.asc_SpecialPasteData(props);
+			this.Api.asc_SpecialPasteData(props, updateClipboardData);
 			return true;
 		},
 		
