@@ -102,7 +102,7 @@ $(function () {
 	// Init basic data
 	const parserFormula = AscCommonExcel.parserFormula;
 	const g_oIdCounter = AscCommon.g_oIdCounter;
-	let oParser, wb, ws, sData = AscCommon.getEmpty(), tmp;
+	let oParser, wb, ws, sData = AscCommon.getEmpty(), tmp, wsView;
 
 	let newFormulaParser = false;
 
@@ -162,6 +162,7 @@ $(function () {
 		oBinaryFileReader.Read(sData, wb);
 		ws = wb.getWorksheet(wb.getActive());
 		AscCommonExcel.getFormulasInfo();
+		wsView = api.wb.getWorksheet(0);
 	}
 
 	// Init basic functions
@@ -10484,7 +10485,19 @@ $(function () {
 		assert.ok(oParser.parse(), 'Test: SORTBY({9.99999999999999E+307;2;3},{9.99999999999999E+307;2;3},1) is parsed.');
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 2, 'Test: Bounded case: Number, Number, Number. Maximum valid Excel number. 3 arguments used.');
 
+		
+		// Dynamic arrays cases:
+		AscCommonExcel.bIsSupportDynamicArrays = true;
+		// Case #1: Array, Array, Number. Array with at(@) operator before and in the same data row.
+		let fillRange = ws.getRange2("D100");
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, fillRange.bbox.r1, fillRange.bbox.c1);
+		oParser = new parserFormula('SORTBY(@A100:A110,@A100:A110,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(AscCommonExcel.oFormulaLocaleInfo.Parse), 'Test: SORTBY(@A100:A110,@A100:A110,1) is parsed.');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0,0).getValue(), 1, 'Test: Positive case: Array, Array, Number. Single col in by_array. 3 arguments used.');
 
+
+		AscCommonExcel.bIsSupportDynamicArrays = false;
 	});
 
 	QUnit.test("Test: \"TRANSPOSE\"", function (assert) {

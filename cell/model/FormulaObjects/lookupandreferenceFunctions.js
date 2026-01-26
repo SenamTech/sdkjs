@@ -2303,7 +2303,6 @@ function (window, undefined) {
 					sortOrder = args[i+1];
 
 				by_array1 = i === 1 ? by_array : by_array1;
-				// TODO can be array with single item and can be just single item
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
 					// if single element in array, fill array with it element
 					let resDimensoins = sortOrder.getDimensions();
