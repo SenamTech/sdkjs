@@ -2047,12 +2047,12 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_SpecialPaste = function(props)
+	asc_docs_api.prototype.asc_SpecialPaste = function(props, updateClipboardData)
 	{
-		return AscCommon.g_specialPasteHelper.Special_Paste(props);
+		return AscCommon.g_specialPasteHelper.Special_Paste(props, updateClipboardData);
 	};
 
-	asc_docs_api.prototype.asc_SpecialPasteData = function(props)
+	asc_docs_api.prototype.asc_SpecialPasteData = function(props, updateClipboardData)
 	{
 		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return;
@@ -2064,19 +2064,26 @@ background-repeat: no-repeat;\
 		//TODO пересмотреть проверку лока и добавление новой точки(AscDFH.historydescription_Document_PasteHotKey)
 		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 		{
-			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
-			window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
+			if (updateClipboardData) {
+				AscCommon.g_clipboardBase.initSpecialPasteData(function () {
+					_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+					AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+				});
+			} else {
+				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start();
+				window['AscCommon'].g_specialPasteHelper.Special_Paste_Start();
 
-			//undo previous action
+				//undo previous action
 
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
-			this.WordControl.m_oLogicDocument.Document_Undo();
-            this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
-			//if (!useCurrentPoint) {
-			_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
-			//}
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = true;
+				this.WordControl.m_oLogicDocument.Document_Undo();
+				this.WordControl.m_oLogicDocument.TurnOffInterfaceEvents = false;
+				//if (!useCurrentPoint) {
+				_logicDoc.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
+				//}
 
-			AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+				AscCommon.Editor_Paste_Exec(this, null, null, null, null, props);
+			}
 		}
 	};
 
@@ -2111,13 +2118,21 @@ background-repeat: no-repeat;\
 			var allowedSpecialPasteProps = null;
 			var sProps = Asc.c_oSpecialPasteProps;
 
+			let checkInternal = function (str) {
+				if (str && str.indexOf("xslData;XLSY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly]
+				} else if (str && str.indexOf("xslData;DOCY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				} else if (str && str.indexOf("xslData;PPTY") > -1) {
+					allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.picture, sProps.keepTextOnly];
+				} else {
+					allowedSpecialPasteProps = [sProps.sourceformatting, sProps.keepTextOnly];
+				}
+			};
+
 			//TODO now don't analyze inner pasted content + place of paste. it can be slow. only simple options
-			// Internal paste from ONLYOFFICE (presentation binary format)
 			if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
-				// Default options for internal paste (see _setSpecialPasteShowOptionsPresentation in wordcopypaste.js)
-				// By default: props = [sProps.sourceformatting, sProps.keepTextOnly]
-				// For internal paste with multiple variants: [destinationFormatting, sourceformatting, picture]
-				allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.sourceformatting, sProps.keepTextOnly];
+				checkInternal(_internal);
 				
 				_specialPasteShowOptions.options = allowedSpecialPasteProps;
 				callback(_specialPasteShowOptions);
@@ -2126,8 +2141,7 @@ background-repeat: no-repeat;\
 			
 			// HTML format (external source - from Excel, Word, browsers)
 			if (_html) {
-				// External paste: [destinationFormatting, keepTextOnly] (see lines 4606, 5011 in wordcopypaste.js)
-				allowedSpecialPasteProps = [sProps.destinationFormatting, sProps.keepTextOnly];
+				checkInternal(_html);
 				
 				_specialPasteShowOptions.options = allowedSpecialPasteProps;
 				callback(_specialPasteShowOptions);

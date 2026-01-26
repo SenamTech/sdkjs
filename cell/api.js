@@ -9771,9 +9771,8 @@ var editor;
 				let allowedSpecialPasteProps = null;
 				let sProps = Asc.c_oSpecialPasteProps;
 
-				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
-					// var isTablePasted = checkTablesPaste();
-					if (_internal.indexOf("xslData;") > -1) {
+				let checkInternal = function (str) {
+					if (str && str.indexOf("xslData;XLSY") > -1) {
 						allowedSpecialPasteProps =
 							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
 								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
@@ -9782,6 +9781,11 @@ var editor;
 					} else {
 						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
 					}
+				};
+
+				if (_internal && _internal !== "" && _internal.indexOf("asc_internalData2;") === 0) {
+					// var isTablePasted = checkTablesPaste();
+					checkInternal(_internal);
 
 					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
 						allowedSpecialPasteProps.push(sProps.picture);
@@ -9800,15 +9804,7 @@ var editor;
 				}
 				let _html = data[AscCommon.c_oAscClipboardDataFormat.Html];
 				if (_html) {
-					if (_html.indexOf('class="xslData;XLSY') > 0) {
-						allowedSpecialPasteProps =
-							[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
-								sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
-								sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
-								sProps.columnWidth];
-					} else {
-						allowedSpecialPasteProps = [sProps.sourceformatting, sProps.destinationFormatting];
-					}
+					checkInternal(_html);
 
 					if (data[AscCommon.c_oAscClipboardDataFormat.Image]) {
 						allowedSpecialPasteProps.push(sProps.picture);
