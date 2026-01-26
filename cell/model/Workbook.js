@@ -1671,6 +1671,7 @@
 			AscCommonExcel.g_oSUMIFSCache.clean();
 			AscCommonExcel.g_oFormulaRangesCache.clean();
 			AscCommonExcel.g_oCountIfCache.clean();
+			AscCommonExcel.g_oSumIfCache.clean();
 		},
 		notifyAllFormulasInChangedWs: function() {
 			let sheetIds = {};
@@ -17053,6 +17054,7 @@
 			AscCommonExcel.g_oSUMIFSCache.remove(this);
 			AscCommonExcel.g_oFormulaRangesCache.remove(this);
 			AscCommonExcel.g_oCountIfCache.remove(this, DataOld, res);
+			AscCommonExcel.g_oSumIfCache.remove(this, DataOld, res);
 		}
 	};
 	Cell.prototype.cleanText = function() {
