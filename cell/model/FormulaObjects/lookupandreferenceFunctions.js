@@ -2279,11 +2279,8 @@ function (window, undefined) {
 	 * @param {number} [sort_order2] optional - The order to use for sorting. 1 for ascending, -1 for descending. Default is ascending.
 	 * @return {array} Returns the sorted array or an error.
 	 */
-	cSORTBY.prototype.getArrayIndex = function (index) {
-		if (index === 0) {
-			return 1;
-		}
-		return index % 2 !== 0 ? 1 : undefined;
+	cSORTBY.prototype.getArrayIndex = function () {
+		return 1;
 	};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 
