@@ -43,6 +43,8 @@ function (window, undefined) {
 	const c_oAscAsyncActionType = Asc.c_oAscAsyncActionType;
 	const c_oAscAsyncAction = Asc.c_oAscAsyncAction;
 	const parserHelp = AscCommon.parserHelp;
+	const cElementType = AscCommonExcel.cElementType;
+	const findLastOperandId = AscCommonExcel.findLastOperandId;
 
 	// Collections for UI Solver feature
 	/** @enum {number} */
@@ -2229,27 +2231,38 @@ function (window, undefined) {
 		const aArgsFormula = getArgsFormula(oParserFormula.outStack, true);
 		const oModel = this.getModel();
 		const oVarsBbox = this.getVariables().getBBox0();
+		const nMainFuncIndex = findLastOperandId(oParserFormula.outStack, function (oElement) {
+			return oElement.type && (oElement.type === cElementType.func || oElement.type === cElementType.operator);
+		});
+		const oCalcType = oParserFormula.outStack[nMainFuncIndex];
 		/** @type {Cell[]} */
 		const aSortedFormulaArgs = [];
 
-		let nCoefficient;
-		let bHasOnlyVars = true;
+		let nCoefficient = 1;
+		let bHasOnlyVarCells = true;
 		let bHasVariableCell = false;
-		let bVariableCellFound = false;
+		let sOperand = '';
+		let bVarCellIsDividend = false;
+
+		if (oCalcType.type === cElementType.operator) {
+			sOperand = oCalcType.name;
+		}
+		if (sOperand === '/') {
+			bVarCellIsDividend = oVarsBbox.contains(aArgsFormula[0].nCol, aArgsFormula[0].nRow);
+		}
 
 		aArgsFormula.forEach(function (oArgCell) {
-			if(!bVariableCellFound && oVarsBbox.contains(oArgCell.nCol, oArgCell.nRow)) {
-				bHasVariableCell = true;
-				bVariableCellFound = true;
-			}
-			if (!oVarsBbox.contains(oArgCell.nCol, oArgCell.nRow)) {
-				bHasOnlyVars = false;
-				aSortedFormulaArgs.push(oArgCell);
-			} else {
+			if (oVarsBbox.contains(oArgCell.nCol, oArgCell.nRow)) {
+				if (!bHasVariableCell) {
+					bHasVariableCell = true;
+				}
 				aSortedFormulaArgs.unshift(oArgCell);
+			} else {
+				bHasOnlyVarCells = false;
+				aSortedFormulaArgs.push(oArgCell);
 			}
 		});
-		if (bHasVariableCell && !bHasOnlyVars) {
+		if (bHasVariableCell && !bHasOnlyVarCells && oCalcType.type === cElementType.func) {
 			const oVariablesCache = {};
 			let bHorizontal = false;
 			let bDirectionFound = false;
@@ -2288,7 +2301,10 @@ function (window, undefined) {
 				}
 			}
 		} else {
-			for (let i = 0, length = aSortedFormulaArgs.length; i < length; i++) {
+			const nStartIndex = bHasVariableCell ? aSortedFormulaArgs.length - 1 : 0;
+			const nEndIndex = bHasVariableCell ? -1 : aSortedFormulaArgs.length;
+			const nStep = bHasVariableCell ? -1 : 1;
+			for (let i = nStartIndex; i !== nEndIndex; i += nStep) {
 				const oCell = aSortedFormulaArgs[i];
 				if (oCell.isFormula()) { // Try to find coefficient for variable
 					const aCellArgs = getArgsFormula(oCell.getFormulaParsed().outStack, true);
@@ -2299,7 +2315,7 @@ function (window, undefined) {
 						let oVariableCell = null;
 						aCellArgs.forEach(function (oCellArg) {
 							if (!oVarsBbox.contains(oCellArg.nCol, oCellArg.nRow) && oCellArg.getNumberValue() !== null) {
-								nCoefficient = oCellArg.getNumberValue();
+								nCoefficient = bVarCellIsDividend ? 1 / oCellArg.getNumberValue() : oCellArg.getNumberValue();
 							} else {
 								oVariableCell = oCellArg;
 							}
@@ -2312,7 +2328,7 @@ function (window, undefined) {
 						}
 					}
 				} else if (oCell.getNumberValue() && !oVarsBbox.contains(oCell.nCol, oCell.nRow))  {
-					nCoefficient = oCell.getNumberValue();
+					nCoefficient = bVarCellIsDividend ? 1 / oCell.getNumberValue() : oCell.getNumberValue();
 				}
 
 				if (oVarsBbox.contains(oCell.nCol, oCell.nRow)) {
