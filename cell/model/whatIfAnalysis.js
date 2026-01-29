@@ -1509,10 +1509,10 @@ function (window, undefined) {
 		this.asc_setShowIterResults(false);
 		this.asc_setIgnoreIntConstraints(false);
 		this.asc_setIntOptimal('1');
-		this.asc_setMaxTime('2147483647');
-		this.asc_setIterations('2147483647');
-		this.asc_setMaxSubproblems('2147483647');
-		this.asc_setMaxFeasibleSolution('2147483647');
+		this.asc_setMaxTime('');
+		this.asc_setIterations('');
+		this.asc_setMaxSubproblems('');
+		this.asc_setMaxFeasibleSolution('');
 		this.asc_setConvergence('0.0001');
 		this.asc_setDerivatives(c_oAscDerivativeType.forward);
 		this.asc_setMultistart(false);
@@ -2251,7 +2251,7 @@ function (window, undefined) {
 			bVarCellIsDividend = oVarsBbox.contains(aArgsFormula[0].nCol, aArgsFormula[0].nRow);
 		}
 
-		aArgsFormula.forEach(function (oArgCell) {
+		aArgsFormula.forEach(function (oArgCell) { // Sorts formula args. Cells from variables must be first in array.
 			if (oVarsBbox.contains(oArgCell.nCol, oArgCell.nRow)) {
 				if (!bHasVariableCell) {
 					bHasVariableCell = true;
@@ -2306,12 +2306,12 @@ function (window, undefined) {
 			const nStep = bHasVariableCell ? -1 : 1;
 			for (let i = nStartIndex; i !== nEndIndex; i += nStep) {
 				const oCell = aSortedFormulaArgs[i];
-				if (oCell.isFormula()) { // Try to find coefficient for variable
+				if (oCell.isFormula()) { // Tries to find coefficient for variable
 					const aCellArgs = getArgsFormula(oCell.getFormulaParsed().outStack, true);
-					const bHasVariableCells = aCellArgs.some(function (oCellArg) {
+					const bIncludeVariableCell = aCellArgs.some(function (oCellArg) {
 						return oVarsBbox.contains(oCellArg.nCol, oCellArg.nRow);
 					});
-					if (bHasVariableCells) {
+					if (bIncludeVariableCell) {
 						let oVariableCell = null;
 						aCellArgs.forEach(function (oCellArg) {
 							if (!oVarsBbox.contains(oCellArg.nCol, oCellArg.nRow) && oCellArg.getNumberValue() !== null) {
@@ -2321,10 +2321,21 @@ function (window, undefined) {
 							}
 						});
 						fAction(nCoefficient, oVariableCell, i);
-					} else {
+					} else if (bHasVariableCell) {
 						const nFormulaResult = oModel.calculateFormula(NaN, null, oCell.getFormulaParsed());
 						if (nFormulaResult) {
 							nCoefficient = nFormulaResult;
+						}
+					} else {
+						// Tries to find a variable cell in the next cells of the formula in a recursive way.
+						const oVariableCell = findCell(oCell, this.getVariables());
+						if (oVariableCell) {
+							const DEFAULT_VALUE = 1;
+							// Creates Range object from Cell object for calculateFormula method.
+							const oVariableRange = new AscCommonExcel.Range(oVariableCell.ws, oVariableCell.nRow, oVariableCell.nCol, oVariableCell.nRow, oVariableCell.nCol);
+							nCoefficient = oModel.calculateFormula(DEFAULT_VALUE, oVariableRange, oCell.getFormulaParsed());
+							oVariableCell.setValue("0"); // Resets value from default value.
+							fAction(nCoefficient, oVariableCell, i);
 						}
 					}
 				} else if (oCell.getNumberValue() && !oVarsBbox.contains(oCell.nCol, oCell.nRow))  {
@@ -3105,7 +3116,7 @@ function (window, undefined) {
 		}
 		// Checks whether variable cells have only the number of type values
 		oVariablesCells._foreachNoEmpty(function (oCell) {
-			if (oCell.getNumberValue() === null) {
+			if (oCell.getValueText() !== null) {
 				bVariablesIsCorrect = false;
 				return true;
 			}
