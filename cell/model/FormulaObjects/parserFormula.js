@@ -10314,7 +10314,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			this.value.numFormat = numFormat;
 			
-			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef()) {
+			if (AscCommonExcel.bIsSupportDynamicArrays && this.getDynamicRef() && null == this.getVm()) {
 				this._checkAndHandleDynamicArraySizeChange(oldDynamicRef, opt_bbox);
 			}
 			
@@ -10348,15 +10348,20 @@ function parserFormula( formula, parent, _ws ) {
 			return;
 		}
 
+		let t = this;
 		let resultDimensions = null;
 		if (this.value.type === cElementType.array) {
 			resultDimensions = this.value.getDimensions(true);
 		} else if (this.value.type === cElementType.cellsRange || this.value.type === cElementType.cellsRange3D) {
-			let range = this.value.getBBox();
-			resultDimensions = {row: range.r2 - range.r1 + 1, col: range.c2 - range.c1 + 1};
+			resultDimensions = this.value.getDimensions();
 		} else if (this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
 			if (oldDynamicRef && (oldDynamicRef.r2 > oldDynamicRef.r1 || oldDynamicRef.c2 > oldDynamicRef.c1)) {
 				this._collapseDynamicArray(oldDynamicRef);
+			}
+			if(false == this.ws.workbook.bUndoChanges && false == this.ws.workbook.bRedoChanges) {
+				this.ws._getCell(oldDynamicRef.r1, oldDynamicRef.c1, function(cell) {
+					//t.ws.dynamicArrayManager.changeCell(cell);
+				});
 			}
 			return;
 		} else {
@@ -10387,14 +10392,14 @@ function parserFormula( formula, parent, _ws ) {
 		
 		if (isCurrentlyCollapsed) {
 			if (oldDynamicRef && (oldDynamicRef.r2 > oldDynamicRef.r1 || oldDynamicRef.c2 > oldDynamicRef.c1)) {
-				this._collapseDynamicArray(oldDynamicRef);
+				//this._collapseDynamicArray(oldDynamicRef);
 			}
 		} else {
 			let wasExpanded = oldDynamicRef && (oldDynamicRef.r2 > oldDynamicRef.r1 || oldDynamicRef.c2 > oldDynamicRef.c1);
 			if (wasExpanded) {
 				this._resizeDynamicArray(requiredRange, oldDynamicRef);
 			} else {
-				this._expandDynamicArray(requiredRange, oldDynamicRef || currentRef);
+				//this._expandDynamicArray(requiredRange, oldDynamicRef || currentRef);
 			}
 		}
 	};
@@ -10487,39 +10492,35 @@ function parserFormula( formula, parent, _ws ) {
 		
 		let cmIndex = this.getCm();
 		if (cmIndex && this.ws.dynamicArrayManager) {
-			this.ws.dynamicArrayManager.updateDynamicArrayCollapsedState(cmIndex, false);
+			//this.ws.dynamicArrayManager.updateDynamicArrayCollapsedState(cmIndex, false);
 		}
-		
+
+		if (oldRange) {
+			for (let r = oldRange.r1; r <= oldRange.r2; r++) {
+				for (let c = oldRange.c1; c <= oldRange.c2; c++) {
+					this.ws._getCell(r, c, function(cell) {
+						if (cell) {
+							cell.setValue("");
+							cell.setIsDirty(true);
+						}
+					});
+				}
+			}
+		}
+
 		let ws = this.ws;
 		let formula = this;
 		for (let row = newRange.r1; row <= newRange.r2; row++) {
 			for (let col = newRange.c1; col <= newRange.c2; col++) {
 				if (row === newRange.r1 && col === newRange.c1) {
-					continue;
+					//continue;
 				}
 				ws._getCell(row, col, function(cell) {
 					if (cell) {
 						cell.setValue("=" + formula.Formula, null, null, newRange, null, {range: newRange});
+						cell.setIsDirty(true);//ws.workbook.dependencyFormulas.addToChangedCell(cell.formulaParsed.parent);
 					}
 				});
-			}
-		}
-		
-		if (oldRange) {
-			for (let r = oldRange.r1; r <= oldRange.r2; r++) {
-				for (let c = oldRange.c1; c <= oldRange.c2; c++) {
-					if (r === newRange.r1 && c === newRange.c1) {
-						continue;
-					}
-					if (r > newRange.r2 || c > newRange.c2 || 
-						r < newRange.r1 || c < newRange.c1) {
-						this.ws._getCell(r, c, function(cell) {
-							if (cell) {
-								cell.setValue("");
-							}
-						});
-					}
-				}
 			}
 		}
 

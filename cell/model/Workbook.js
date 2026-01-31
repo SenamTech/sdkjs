@@ -25133,7 +25133,7 @@
 
 			if (!(formula.aca && formula.ca)) {
 				// array can expand, setValue for each cell except first
-				const dimensions = formulaResult.getDimensions(true);
+				const dimensions = formulaResult.getDimensions(/*true*/);
 				const newRef = new Asc.Range(
 					firstCellRef.c1,
 					firstCellRef.r1,
